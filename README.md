@@ -321,7 +321,7 @@ DELETE /:id                   Delete notification
    - `NODE_ENV` - Set to `production`
 
    Frontend:
-   - `VITE_API_URL` - Your Railway backend API URL
+   - `VITE_API_URL` - `https://YOUR_BACKEND_DOMAIN/api`
 
 5. **Deploy**
    - Railway auto-deploys on push

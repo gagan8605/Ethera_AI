@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "serve -s dist -l $PORT",
     "preview": "vite preview",
     "lint": "eslint src --ext js,jsx"
   },
@@ -27,6 +28,7 @@
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.20.1",
     "recharts": "^2.10.3",
+    "serve": "^14.2.4",
     "zustand": "^4.4.1"
   },
   "devDependencies": {

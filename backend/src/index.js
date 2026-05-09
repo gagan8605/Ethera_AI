@@ -11,6 +11,11 @@ import projectRoutes from './routes/projectRoutes.js'
 import taskRoutes from './routes/taskRoutes.js'
 import dashboardRoutes from './routes/dashboardRoutes.js'
 import notificationRoutes from './routes/notificationRoutes.js'
+import teamRoutes from './routes/teamRoutes.js'
+import analyticsRoutes from './routes/analyticsRoutes.js'
+import calendarRoutes from './routes/calendarRoutes.js'
+import messageRoutes from './routes/messageRoutes.js'
+import supportRoutes from './routes/supportRoutes.js'
 import { errorHandler, notFound } from './middleware/errorHandler.js'
 
 dotenv.config()
@@ -82,6 +87,11 @@ app.use('/api/projects', projectRoutes)
 app.use('/api/projects/:projectId/tasks', taskRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/team', teamRoutes)
+app.use('/api/analytics', analyticsRoutes)
+app.use('/api/calendar', calendarRoutes)
+app.use('/api/messages', messageRoutes)
+app.use('/api/support', supportRoutes)
 
 // Health check
 app.get('/health', (req, res) => {

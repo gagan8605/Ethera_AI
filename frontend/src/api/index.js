@@ -58,3 +58,24 @@ export const notificationAPI = {
   markAllAsRead: () => client.put('/notifications/read-all'),
   delete: (id) => client.delete(`/notifications/${id}`)
 }
+
+export const teamAPI = {
+  overview: () => client.get('/team')
+}
+
+export const analyticsAPI = {
+  overview: () => client.get('/analytics/overview')
+}
+
+export const calendarAPI = {
+  events: () => client.get('/calendar/events')
+}
+
+export const messageAPI = {
+  list: () => client.get('/messages'),
+  send: (data) => client.post('/messages', data)
+}
+
+export const supportAPI = {
+  submit: (data) => client.post('/support', data)
+}

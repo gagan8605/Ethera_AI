@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { projectAPI, taskAPI, dashboardAPI, notificationAPI } from '../api/index.js'
+import { projectAPI, taskAPI, dashboardAPI, notificationAPI, teamAPI, analyticsAPI, calendarAPI, messageAPI, supportAPI } from '../api/index.js'
 import toast from 'react-hot-toast'
 
 export const useProjects = () => {
@@ -161,6 +161,76 @@ export const useNotifications = () => {
       return response.data
     },
     refetchInterval: 30000
+  })
+}
+
+export const useTeamOverview = () => {
+  return useQuery({
+    queryKey: ['team-overview'],
+    queryFn: async () => {
+      const response = await teamAPI.overview()
+      return response.data
+    },
+    refetchInterval: 30000
+  })
+}
+
+export const useAnalyticsOverview = () => {
+  return useQuery({
+    queryKey: ['analytics-overview'],
+    queryFn: async () => {
+      const response = await analyticsAPI.overview()
+      return response.data
+    },
+    refetchInterval: 30000
+  })
+}
+
+export const useCalendarEvents = () => {
+  return useQuery({
+    queryKey: ['calendar-events'],
+    queryFn: async () => {
+      const response = await calendarAPI.events()
+      return response.data
+    },
+    refetchInterval: 30000
+  })
+}
+
+export const useMessages = () => {
+  return useQuery({
+    queryKey: ['messages'],
+    queryFn: async () => {
+      const response = await messageAPI.list()
+      return response.data
+    },
+    refetchInterval: 30000
+  })
+}
+
+export const useSendMessage = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => messageAPI.send(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] })
+      toast.success('Message sent successfully')
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to send message')
+    }
+  })
+}
+
+export const useSubmitSupportRequest = () => {
+  return useMutation({
+    mutationFn: (data) => supportAPI.submit(data),
+    onSuccess: () => {
+      toast.success('Support request submitted successfully')
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to submit support request')
+    }
   })
 }
 

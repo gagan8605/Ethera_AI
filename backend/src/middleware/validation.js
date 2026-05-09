@@ -101,3 +101,15 @@ export const validateQueryFilters = [
   query('search').optional().trim(),
   query('overdue').optional().isBoolean()
 ]
+
+// Communication validations
+export const validateSendMessage = [
+  body('recipientId').trim().isString().withMessage('Recipient is required'),
+  body('content').trim().isLength({ min: 1, max: 1000 }).withMessage('Message must be between 1 and 1000 characters')
+]
+
+export const validateSupportRequest = [
+  body('subject').trim().isLength({ min: 3, max: 120 }).withMessage('Subject must be between 3 and 120 characters'),
+  body('category').optional().trim().isLength({ min: 2, max: 50 }).withMessage('Invalid category'),
+  body('message').trim().isLength({ min: 10, max: 2000 }).withMessage('Message must be between 10 and 2000 characters')
+]

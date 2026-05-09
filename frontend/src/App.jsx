@@ -9,6 +9,12 @@ import Dashboard from './pages/Dashboard'
 import Projects from './pages/Projects'
 import MyTasks from './pages/MyTasks'
 import Settings from './pages/Settings'
+import Calendar from './pages/Calendar'
+import Team from './pages/Team'
+import Analytics from './pages/Analytics'
+import Messages from './pages/Messages'
+import Support from './pages/Support'
+import Admin from './pages/Admin'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import CookieConsent from './components/CookieConsent'
@@ -35,6 +41,30 @@ function ProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  return children
+}
+
+function AdminRoute({ children }) {
+  const { user, isAuthenticated, isLoading } = useAuthStore()
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-bg-primary">
+        <div className="animate-spin">
+          <div className="w-12 h-12 border-4 border-bg-card border-t-accent rounded-full"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />
   }
 
   return children
@@ -93,6 +123,54 @@ export default function App() {
                   <ProtectedRoute>
                     <Settings />
                   </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/calendar"
+                element={
+                  <ProtectedRoute>
+                    <Calendar />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/team"
+                element={
+                  <ProtectedRoute>
+                    <Team />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute>
+                    <Analytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/messages"
+                element={
+                  <ProtectedRoute>
+                    <Messages />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/support"
+                element={
+                  <ProtectedRoute>
+                    <Support />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <Admin />
+                  </AdminRoute>
                 }
               />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

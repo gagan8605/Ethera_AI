@@ -182,9 +182,9 @@ After seeding, use these credentials:
 - Password: `Admin123!`
 
 **Member Accounts**
-- Email: `alice@demo.com` / Password: `Member123!`
-- Email: `bob@demo.com` / Password: `Member123!`
-- Email: `carol@demo.com` / Password: `Member123!`
+- Email: `sagar@demo.com` / Password: `Member123!`
+- Email: `ram@demo.com` / Password: `Member123!`
+- Email: `priya@demo.com` / Password: `Member123!`
 
 ## API Endpoints
 

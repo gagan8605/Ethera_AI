@@ -1,0 +1,18 @@
+[build]
+builder = "nixpacks"
+
+[[services]]
+name = "backend"
+source = "backend"
+
+[services.build]
+buildCommand = "npm install && npx prisma generate && npx prisma migrate deploy"
+startCommand = "node src/index.js"
+
+[[services]]
+name = "frontend"
+source = "frontend"
+
+[services.build]
+buildCommand = "npm install && npm run build"
+startCommand = "npx serve -s dist -l 3000"

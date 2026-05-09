@@ -52,7 +52,8 @@ export default function Login() {
       toast.success('Welcome back! Redirecting to dashboard...')
       navigate('/dashboard')
     } catch (error) {
-      // Error is handled by the store
+      const message = error.response?.data?.message || error.message || 'Unable to sign in'
+      toast.error(message)
     }
   }
 

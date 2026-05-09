@@ -136,33 +136,33 @@ export default function App() {
               <Route
                 path="/team"
                 element={
-                  <ProtectedRoute>
+                  <AdminRoute>
                     <Team />
-                  </ProtectedRoute>
+                  </AdminRoute>
                 }
               />
               <Route
                 path="/analytics"
                 element={
-                  <ProtectedRoute>
+                  <AdminRoute>
                     <Analytics />
-                  </ProtectedRoute>
+                  </AdminRoute>
                 }
               />
               <Route
                 path="/messages"
                 element={
-                  <ProtectedRoute>
+                  <AdminRoute>
                     <Messages />
-                  </ProtectedRoute>
+                  </AdminRoute>
                 }
               />
               <Route
                 path="/support"
                 element={
-                  <ProtectedRoute>
+                  <AdminRoute>
                     <Support />
-                  </ProtectedRoute>
+                  </AdminRoute>
                 }
               />
               <Route

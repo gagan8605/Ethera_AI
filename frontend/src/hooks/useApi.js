@@ -142,6 +142,17 @@ export const useDashboardStats = () => {
   })
 }
 
+export const useDashboardMyTasks = () => {
+  return useQuery({
+    queryKey: ['dashboard-my-tasks'],
+    queryFn: async () => {
+      const response = await dashboardAPI.getMyTasks()
+      return response.data
+    },
+    refetchInterval: 30000
+  })
+}
+
 export const useActivityFeed = () => {
   return useQuery({
     queryKey: ['activity-feed'],

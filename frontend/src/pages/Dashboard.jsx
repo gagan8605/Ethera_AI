@@ -1,5 +1,8 @@
 import React, { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { useDashboardStats, useActivityFeed, useNotifications } from '../hooks/useApi'
+import { useDashboardMyTasks } from '../hooks/useApi'
+import { useAuthStore } from '../store/authStore'
 import { 
   TrendingUp, 
   CheckCircle, 
@@ -24,9 +27,11 @@ import { formatDistanceToNow, format } from 'date-fns'
 import Layout from '../components/Layout'
 
 export default function Dashboard() {
+  const { user } = useAuthStore()
   const { data: stats, isLoading: statsLoading } = useDashboardStats()
   const { data: activityFeed, isLoading: activityLoading } = useActivityFeed()
   const { data: notifications, isLoading: notificationsLoading } = useNotifications()
+  const { data: myTasks, isLoading: myTasksLoading } = useDashboardMyTasks()
 
   // Mock data - replace with real API data
   const weeklyData = useMemo(() => [
@@ -101,6 +106,22 @@ export default function Dashboard() {
     const hours = diff / (1000 * 60 * 60)
     if (hours < 24) return formatDistanceToNow(new Date(date), { addSuffix: true })
     return format(new Date(date), 'MMM d, h:mm a')
+  }
+
+  if (user?.role !== 'ADMIN') {
+    return (
+      <MemberDashboard
+        user={user}
+        stats={stats}
+        statsLoading={statsLoading}
+        activityFeed={activityFeed}
+        activityLoading={activityLoading}
+        notifications={notifications}
+        notificationsLoading={notificationsLoading}
+        myTasks={myTasks}
+        myTasksLoading={myTasksLoading}
+      />
+    )
   }
 
   // Get activity icon based on action
@@ -413,5 +434,166 @@ export default function Dashboard() {
         </div>
       </div>
     </Layout>
+  )
+}
+
+function MemberDashboard({ user, stats, statsLoading, activityFeed, activityLoading, notifications, notificationsLoading, myTasks, myTasksLoading }) {
+  const pendingTasks = myTasks?.filter((task) => task.status !== 'DONE') || []
+  const recentTasks = (myTasks || []).slice(0, 5)
+
+  return (
+    <Layout>
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+          <div className="rounded-3xl border border-gray-800 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 p-6 shadow-2xl shadow-black/20">
+            <p className="text-sm uppercase tracking-[0.35em] text-purple-300">Member Dashboard</p>
+            <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h1 className="text-4xl font-bold text-white">Welcome back, {user?.name?.split(' ')[0] || 'Member'}</h1>
+                <p className="mt-2 max-w-2xl text-gray-300">
+                  Here’s your personalized workspace view with assigned work, updates, and the next things to focus on.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/my-tasks" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 transition hover:scale-[1.01]">
+                  My Tasks <ArrowUpRight className="h-4 w-4" />
+                </Link>
+                <Link to="/projects" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
+                  Projects <FolderOpen className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <CompactStat title="My Tasks" value={stats?.totalTasks || 0} note="Assigned to you" icon={CheckCircle} accent="#6366f1" />
+            <CompactStat title="Done Today" value={stats?.completedToday || 0} note="Completed today" icon={ThumbsUp} accent="#10b981" />
+            <CompactStat title="Overdue" value={stats?.overdueCount || 0} note="Needs attention" icon={AlertCircle} accent="#ef4444" />
+            <CompactStat title="Active Projects" value={stats?.activeProjects || 0} note="You’re a member of" icon={FolderOpen} accent="#f59e0b" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="rounded-2xl border border-gray-800 bg-gray-900/80 p-6 shadow-lg">
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Your Tasks</h2>
+                  <p className="text-sm text-gray-400">Most recent assigned work and status.</p>
+                </div>
+                <Calendar className="h-5 w-5 text-purple-400" />
+              </div>
+
+              {myTasksLoading ? (
+                <div className="rounded-xl border border-dashed border-gray-700 p-8 text-center text-gray-400">Loading your tasks...</div>
+              ) : recentTasks.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-700 p-8 text-center text-gray-400">No assigned tasks found.</div>
+              ) : (
+                <div className="space-y-3">
+                  {recentTasks.map((task) => (
+                    <div key={task.id} className="rounded-2xl border border-gray-800 bg-gray-950/50 p-4 transition hover:border-purple-500/40">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.25em] text-gray-500">{task.project?.name}</p>
+                          <h3 className="mt-1 text-lg font-semibold text-white">{task.title}</h3>
+                          <p className="mt-1 text-sm text-gray-400">{task.description || 'No description provided'}</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-300">
+                          <span className="rounded-full border border-gray-700 px-2 py-1">{task.status}</span>
+                          {task.dueDate && <span>{format(new Date(task.dueDate), 'MMM d')}</span>}
+                        </div>
+                      </div>
+                      <div className="mt-3 h-2 rounded-full bg-gray-800">
+                        <div className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" style={{ width: task.status === 'DONE' ? '100%' : task.status === 'IN_PROGRESS' ? '55%' : '20%' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-gray-800 bg-gray-900/80 p-6 shadow-lg">
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">Latest Updates</h2>
+                    <p className="text-sm text-gray-400">Recent team activity you can review.</p>
+                  </div>
+                  <Activity className="h-5 w-5 text-cyan-400" />
+                </div>
+
+                {activityLoading ? (
+                  <div className="rounded-xl border border-dashed border-gray-700 p-8 text-center text-gray-400">Loading updates...</div>
+                ) : (activityFeed || []).length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-gray-700 p-8 text-center text-gray-400">No recent updates.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {activityFeed.slice(0, 4).map((activity) => (
+                      <div key={activity.id} className="rounded-xl border border-gray-800 bg-gray-950/50 p-3">
+                        <p className="text-sm text-white">{activity.user?.name} {activity.action.toLowerCase()} {activity.entity.toLowerCase()}</p>
+                        <p className="text-xs text-gray-500">{formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-gray-800 bg-gray-900/80 p-6 shadow-lg">
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">Notifications</h2>
+                    <p className="text-sm text-gray-400">Important items from your workspace.</p>
+                  </div>
+                  <MessageSquare className="h-5 w-5 text-pink-400" />
+                </div>
+
+                {notificationsLoading ? (
+                  <div className="rounded-xl border border-dashed border-gray-700 p-8 text-center text-gray-400">Loading notifications...</div>
+                ) : (notifications || []).length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-gray-700 p-8 text-center text-gray-400">No notifications yet.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.slice(0, 4).map((notification) => (
+                      <div key={notification.id} className="rounded-xl border border-gray-800 bg-gray-950/50 p-3">
+                        <p className="text-sm text-white">{notification.message}</p>
+                        <p className="text-xs text-gray-500">{format(new Date(notification.createdAt), 'MMM d, h:mm a')}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-gray-800 bg-gradient-to-br from-indigo-600 to-purple-600 p-6 text-white shadow-lg">
+                <h3 className="text-lg font-bold">Focus for today</h3>
+                <p className="mt-2 text-sm text-indigo-100">You have {pendingTasks.length} open tasks. Check My Tasks for your next action.</p>
+                <div className="mt-4 flex gap-3">
+                  <Link to="/my-tasks" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-indigo-700">
+                    Review Tasks <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link to="/calendar" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white">
+                    View Calendar <Calendar className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  )
+}
+
+function CompactStat({ title, value, note, icon: Icon, accent }) {
+  return (
+    <div className="rounded-2xl border border-gray-800 bg-gray-900/80 p-4 shadow-lg">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm text-gray-400">{title}</p>
+          <p className="mt-1 text-3xl font-bold text-white">{value}</p>
+          <p className="mt-1 text-xs text-gray-500">{note}</p>
+        </div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl text-white" style={{ backgroundColor: `${accent}22`, color: accent }}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </div>
   )
 }

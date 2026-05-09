@@ -28,20 +28,25 @@ export default function Sidebar() {
   const { user, logout } = useAuthStore()
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const [hoveredItem, setHoveredItem] = useState(null)
+  const isAdmin = user?.role === 'ADMIN'
 
   const mainLinks = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', color: '#6366f1' },
     { icon: FolderOpen, label: 'Projects', href: '/projects', color: '#f59e0b' },
     { icon: CheckSquare, label: 'My Tasks', href: '/my-tasks', color: '#10b981' },
     { icon: Calendar, label: 'Calendar', href: '/calendar', color: '#8b5cf6' },
-    { icon: Users, label: 'Team', href: '/team', color: '#ec4899' },
-    { icon: BarChart3, label: 'Analytics', href: '/analytics', color: '#06b6d4' }
+    ...(isAdmin ? [
+      { icon: Users, label: 'Team', href: '/team', color: '#ec4899' },
+      { icon: BarChart3, label: 'Analytics', href: '/analytics', color: '#06b6d4' }
+    ] : [])
   ]
 
   const bottomLinks = [
-    { icon: MessageSquare, label: 'Messages', href: '/messages', color: '#94a3b8' },
-    { icon: HelpCircle, label: 'Help & Support', href: '/support', color: '#94a3b8' },
-    { icon: Settings, label: 'Settings', href: '/settings', color: '#94a3b8' }
+    { icon: Settings, label: 'Settings', href: '/settings', color: '#94a3b8' },
+    ...(isAdmin ? [
+      { icon: MessageSquare, label: 'Messages', href: '/messages', color: '#94a3b8' },
+      { icon: HelpCircle, label: 'Help & Support', href: '/support', color: '#94a3b8' }
+    ] : [])
   ]
 
   const isActive = (href) => location.pathname === href || location.pathname.startsWith(href + '/')

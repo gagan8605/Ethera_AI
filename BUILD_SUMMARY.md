@@ -182,9 +182,9 @@ These are optional enhancements (the app is fully functional without them):
 
 ### Demo Users
 - **Admin**: admin@demo.com / Admin123!
-- **User 1**: alice@demo.com / Member123!
-- **User 2**: bob@demo.com / Member123!
-- **User 3**: carol@demo.com / Member123!
+- **Member 1**: sagar@demo.com / Member123!
+- **Member 2**: ram@demo.com / Member123!
+- **Member 3**: priya@demo.com / Member123!
 
 ### Demo Projects
 1. Mobile App Redesign (by Alice)

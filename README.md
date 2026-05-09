@@ -186,6 +186,8 @@ After seeding, use these credentials:
 - Email: `ram@demo.com` / Password: `Member123!`
 - Email: `priya@demo.com` / Password: `Member123!`
 
+The login page now includes only the admin demo shortcut.
+
 ## API Endpoints
 
 ### Authentication `/api/auth`

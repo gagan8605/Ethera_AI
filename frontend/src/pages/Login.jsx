@@ -58,16 +58,10 @@ export default function Login() {
   }
 
   // Demo credentials quick fill
-  const fillDemoCredentials = (type) => {
-    if (type === 'admin') {
-      setEmail('admin@demo.com')
-      setPassword('Admin123!')
-      toast.success('Admin credentials filled')
-    } else {
-      setEmail('alice@demo.com')
-      setPassword('Member123!')
-      toast.success('User credentials filled')
-    }
+  const fillDemoCredentials = () => {
+    setEmail('admin@demo.com')
+    setPassword('Admin123!')
+    toast.success('Admin credentials filled')
   }
 
   return (
@@ -288,20 +282,13 @@ export default function Login() {
                 <div className="h-px flex-1 bg-white/20"></div>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <button
-                  onClick={() => fillDemoCredentials('admin')}
+                  onClick={fillDemoCredentials}
                   className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg transition-all duration-300 group"
                 >
                   <p className="text-xs text-white/70 group-hover:text-white transition-colors">Admin Demo</p>
                   <p className="text-[10px] text-white/40">admin@demo.com</p>
-                </button>
-                <button
-                  onClick={() => fillDemoCredentials('user')}
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg transition-all duration-300 group"
-                >
-                  <p className="text-xs text-white/70 group-hover:text-white transition-colors">User Demo</p>
-                  <p className="text-[10px] text-white/40">alice@demo.com</p>
                 </button>
               </div>
             </div>

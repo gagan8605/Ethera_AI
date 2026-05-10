@@ -14,6 +14,7 @@ import Team from './pages/Team'
 import Analytics from './pages/Analytics'
 import Messages from './pages/Messages'
 import Support from './pages/Support'
+import Notifications from './pages/Notifications'
 import Admin from './pages/Admin'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
@@ -160,9 +161,17 @@ export default function App() {
               <Route
                 path="/support"
                 element={
-                  <AdminRoute>
+                  <ProtectedRoute>
                     <Support />
-                  </AdminRoute>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute>
+                    <Notifications />
+                  </ProtectedRoute>
                 }
               />
               <Route

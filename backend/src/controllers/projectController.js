@@ -1,5 +1,31 @@
 import prisma from '../utils/db.js'
-import { ApiError, asyncHandler, logActivity } from '../utils/helpers.js'
+import { ApiError, asyncHandler, logActivity, createNotificationRecord } from '../utils/helpers.js'
+import { emitNotificationEvent } from '../utils/realtime.js'
+
+const normalizeText = (value) => (typeof value === 'string' ? value.trim() : '')
+
+const generateProjectKey = async (name) => {
+  const base = normalizeText(name)
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 4) || 'PRJ'
+
+  let suffix = Math.floor(100 + Math.random() * 900)
+  let key = `${base}-${suffix}`
+  let exists = await prisma.project.findFirst({ where: { projectKey: key }, select: { id: true } })
+
+  while (exists) {
+    suffix = Math.floor(100 + Math.random() * 900)
+    key = `${base}-${suffix}`
+    exists = await prisma.project.findFirst({ where: { projectKey: key }, select: { id: true } })
+  }
+
+  return key
+}
 
 export const listProjects = asyncHandler(async (req, res) => {
   const { status } = req.query
@@ -14,6 +40,7 @@ export const listProjects = asyncHandler(async (req, res) => {
     },
     include: {
       owner: { select: { id: true, name: true, avatar: true } },
+      projectManager: { select: { id: true, name: true, avatar: true, email: true } },
       members: {
         include: { user: { select: { id: true, name: true, avatar: true } } }
       },
@@ -26,24 +53,83 @@ export const listProjects = asyncHandler(async (req, res) => {
 })
 
 export const createProject = asyncHandler(async (req, res) => {
-  const { name, description, color, dueDate } = req.body
+  const {
+    name,
+    description,
+    color,
+    dueDate,
+    team,
+    projectManagerId,
+    startDate,
+    deadline,
+    priority,
+    budget,
+    department,
+    clientName,
+    visibility
+  } = req.body
+
+  const manager = await prisma.user.findUnique({
+    where: { id: projectManagerId },
+    select: { id: true }
+  })
+
+  if (!manager) {
+    throw new ApiError(404, 'Project manager not found')
+  }
+
+  const projectKey = await generateProjectKey(name)
 
   const project = await prisma.project.create({
     data: {
       name,
       description: description || null,
       color: color || '#6366f1',
-      dueDate: dueDate ? new Date(dueDate) : null,
+      projectKey,
+      teamName: team,
+      projectManagerId,
+      startDate: startDate ? new Date(startDate) : null,
+      dueDate: (deadline || dueDate) ? new Date(deadline || dueDate) : null,
+      priority: priority || 'MEDIUM',
+      budget: budget !== undefined && budget !== '' ? Number(budget) : null,
+      department: department || null,
+      clientName: clientName || null,
+      visibility: visibility || 'TEAM',
       ownerId: req.user.id
     },
     include: {
       owner: { select: { id: true, name: true, avatar: true } },
+      projectManager: { select: { id: true, name: true, avatar: true, email: true } },
       members: true,
       _count: { select: { tasks: true } }
     }
   })
 
-  await logActivity(prisma, req.user.id, 'CREATE', 'PROJECT', project.id, project.id)
+  if (projectManagerId !== req.user.id) {
+    await prisma.projectMember.upsert({
+      where: {
+        userId_projectId: {
+          userId: projectManagerId,
+          projectId: project.id
+        }
+      },
+      create: {
+        userId: projectManagerId,
+        projectId: project.id,
+        role: 'ADMIN'
+      },
+      update: {
+        role: 'ADMIN'
+      }
+    })
+  }
+
+  await logActivity(prisma, req.user.id, 'CREATE', 'PROJECT', project.id, project.id, null, {
+    projectKey,
+    team,
+    projectManagerId,
+    priority: project.priority
+  })
 
   res.status(201).json(project)
 })
@@ -55,6 +141,7 @@ export const getProject = asyncHandler(async (req, res) => {
     where: { id },
     include: {
       owner: { select: { id: true, name: true, avatar: true, email: true } },
+      projectManager: { select: { id: true, name: true, avatar: true, email: true } },
       members: {
         include: { user: { select: { id: true, name: true, avatar: true, email: true } } }
       },
@@ -79,7 +166,22 @@ export const getProject = asyncHandler(async (req, res) => {
 
 export const updateProject = asyncHandler(async (req, res) => {
   const { id } = req.params
-  const { name, description, color, status, dueDate } = req.body
+  const {
+    name,
+    description,
+    color,
+    status,
+    dueDate,
+    team,
+    projectManagerId,
+    startDate,
+    deadline,
+    priority,
+    budget,
+    department,
+    clientName,
+    visibility
+  } = req.body
 
   const project = await prisma.project.findUnique({
     where: { id },
@@ -98,6 +200,17 @@ export const updateProject = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Only project admin can update')
   }
 
+  if (projectManagerId) {
+    const manager = await prisma.user.findUnique({
+      where: { id: projectManagerId },
+      select: { id: true }
+    })
+
+    if (!manager) {
+      throw new ApiError(404, 'Project manager not found')
+    }
+  }
+
   const updated = await prisma.project.update({
     where: { id },
     data: {
@@ -105,10 +218,20 @@ export const updateProject = asyncHandler(async (req, res) => {
       ...(description !== undefined && { description }),
       ...(color && { color }),
       ...(status && { status }),
-      ...(dueDate && { dueDate: new Date(dueDate) })
+      ...(dueDate && { dueDate: new Date(dueDate) }),
+      ...(deadline && { dueDate: new Date(deadline) }),
+      ...(team !== undefined && { teamName: team || null }),
+      ...(projectManagerId !== undefined && { projectManagerId: projectManagerId || null }),
+      ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),
+      ...(priority && { priority }),
+      ...(budget !== undefined && { budget: budget === '' ? null : Number(budget) }),
+      ...(department !== undefined && { department: department || null }),
+      ...(clientName !== undefined && { clientName: clientName || null }),
+      ...(visibility && { visibility })
     },
     include: {
       owner: { select: { id: true, name: true, avatar: true } },
+      projectManager: { select: { id: true, name: true, avatar: true, email: true } },
       members: {
         include: { user: { select: { id: true, name: true, avatar: true } } }
       },
@@ -245,14 +368,14 @@ export const addProjectMember = asyncHandler(async (req, res) => {
   await logActivity(prisma, req.user.id, 'ADD_MEMBER', 'PROJECT', id, id, null, { email })
 
   // Create notification
-  await prisma.notification.create({
-    data: {
-      userId: user.id,
-      type: 'MEMBER_ADDED',
-      message: `You were added to project ${project.name}`,
-      link: `/projects/${id}`
-    }
+  const notification = await createNotificationRecord(prisma, {
+    userId: user.id,
+    type: 'MEMBER_ADDED',
+    message: `You were added to project ${project.name}`,
+    link: `/projects/${id}`
   })
+
+  emitNotificationEvent(user.id, { type: 'MEMBER_ADDED', notification })
 
   res.status(201).json(member)
 })

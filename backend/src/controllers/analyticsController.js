@@ -89,6 +89,73 @@ export const getAnalyticsOverview = asyncHandler(async (req, res) => {
     })
   )
 
+  const memberRows = await prisma.projectMember.findMany({
+    where: {
+      project: getAccessibleProjectsWhere(userId)
+    },
+    include: {
+      user: { select: { id: true, name: true, avatar: true, email: true } },
+      project: { select: { id: true, name: true } }
+    }
+  })
+
+  const memberMap = new Map()
+
+  for (const member of memberRows) {
+    if (!memberMap.has(member.userId)) {
+      memberMap.set(member.userId, {
+        id: member.user.id,
+        name: member.user.name,
+        avatar: member.user.avatar,
+        email: member.user.email,
+        projectCount: 0,
+        taskCount: 0,
+        overdueCount: 0,
+        projects: []
+      })
+    }
+
+    const entry = memberMap.get(member.userId)
+    entry.projectCount += 1
+    entry.projects.push(member.project.name)
+  }
+
+  const memberLoads = [...memberMap.values()]
+
+  await Promise.all(
+    memberLoads.map(async (member) => {
+      const [taskCount, overdueCount] = await Promise.all([
+        prisma.task.count({
+          where: {
+            assigneeId: member.id,
+            project: getAccessibleProjectsWhere(userId)
+          }
+        }),
+        prisma.task.count({
+          where: {
+            assigneeId: member.id,
+            project: getAccessibleProjectsWhere(userId),
+            dueDate: { lt: new Date() },
+            status: { not: doneStatus }
+          }
+        })
+      ])
+
+      member.taskCount = taskCount
+      member.overdueCount = overdueCount
+    })
+  )
+
+  memberLoads.sort((a, b) => b.taskCount - a.taskCount)
+
+  const overloadedMembers = memberLoads.filter((member) => member.taskCount >= 5 || member.overdueCount >= 2).slice(0, 5)
+  const memberLoadSummary = {
+    totalMembers: memberLoads.length,
+    overloadedMembersCount: overloadedMembers.length,
+    averageTasksPerMember: memberLoads.length > 0 ? Math.round((memberLoads.reduce((sum, member) => sum + member.taskCount, 0) / memberLoads.length) * 10) / 10 : 0,
+    overloadedMembers
+  }
+
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
   res.json({
@@ -102,6 +169,7 @@ export const getAnalyticsOverview = asyncHandler(async (req, res) => {
     statusChart,
     priorityChart,
     completionTrend,
-    projectProgress
+    projectProgress,
+    memberLoadSummary
   })
 })

@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 import { useUIStore } from '../store/uiStore'
+import { useNotificationStream } from '../hooks/useApi'
 import clsx from 'clsx'
 
 export default function Layout({ children }) {
   const { sidebarOpen } = useUIStore()
+  useNotificationStream()
   const sidebarDesktopWidth = sidebarOpen ? 'lg:pl-64' : 'lg:pl-20'
 
   return (

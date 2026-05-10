@@ -15,7 +15,7 @@ import {
   LineChart,
   Line
 } from 'recharts'
-import { Activity, CheckCircle2, Clock3, FolderOpen, Target, TrendingUp } from 'lucide-react'
+import { Activity, CheckCircle2, Clock3, FolderOpen, Target, TrendingUp, Users, AlertTriangle } from 'lucide-react'
 
 const STATUS_COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#22c55e']
 const PRIORITY_COLORS = ['#64748b', '#0ea5e9', '#f97316', '#ef4444']
@@ -37,6 +37,12 @@ export default function Analytics() {
           <StatCard icon={Activity} label="Total Tasks" value={data?.stats?.totalTasks || 0} />
           <StatCard icon={Clock3} label="Overdue" value={data?.stats?.overdueTasks || 0} />
           <StatCard icon={FolderOpen} label="Active Projects" value={data?.stats?.activeProjects || 0} />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <StatCard icon={Users} label="Active Members" value={data?.memberLoadSummary?.totalMembers || 0} />
+          <StatCard icon={AlertTriangle} label="Overloaded Members" value={data?.memberLoadSummary?.overloadedMembersCount || 0} />
+          <StatCard icon={TrendingUp} label="Avg Tasks / Member" value={data?.memberLoadSummary?.averageTasksPerMember || 0} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-2">
@@ -106,6 +112,34 @@ export default function Analytics() {
             </div>
           </Panel>
         </div>
+
+        <Panel title="Member Load">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {(data?.memberLoadSummary?.overloadedMembers || []).map((member) => (
+              <div key={member.id} className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-white">{member.name}</p>
+                    <p className="text-xs text-gray-400">{member.email}</p>
+                  </div>
+                  <span className="rounded-full bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-300">
+                    {member.taskCount} tasks
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+                  <span>{member.overdueCount} overdue</span>
+                  <span>{member.projectCount} projects</span>
+                </div>
+                <div className="mt-3 h-2 rounded-full bg-gray-800">
+                  <div className="h-2 rounded-full bg-red-500" style={{ width: `${Math.min(member.taskCount * 10, 100)}%` }} />
+                </div>
+              </div>
+            ))}
+            {(data?.memberLoadSummary?.overloadedMembers || []).length === 0 && (
+              <div className="rounded-xl border border-gray-800 bg-gray-950/50 p-4 text-sm text-gray-400">No overloaded members detected.</div>
+            )}
+          </div>
+        </Panel>
       </div>
     </Layout>
   )

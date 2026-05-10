@@ -43,9 +43,9 @@ export default function Sidebar() {
 
   const bottomLinks = [
     { icon: Settings, label: 'Settings', href: '/settings', color: '#94a3b8' },
+    { icon: HelpCircle, label: 'Help & Support', href: '/support', color: '#94a3b8' },
     ...(isAdmin ? [
-      { icon: MessageSquare, label: 'Messages', href: '/messages', color: '#94a3b8' },
-      { icon: HelpCircle, label: 'Help & Support', href: '/support', color: '#94a3b8' }
+      { icon: MessageSquare, label: 'Messages', href: '/messages', color: '#94a3b8' }
     ] : [])
   ]
 
@@ -140,31 +140,6 @@ export default function Sidebar() {
             })}
           </div>
 
-          {/* Upgrade Section */}
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
-            {sidebarOpen ? (
-              <div className="mx-3 p-3 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <Gift className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Upgrade to Pro
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                  Get advanced features and priority support
-                </p>
-                <button className="w-full text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg px-3 py-1.5 hover:shadow-md transition-all">
-                  Upgrade Now
-                </button>
-              </div>
-            ) : (
-              <div className="flex justify-center">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                  <Gift className="w-4 h-4 text-white" />
-                </div>
-              </div>
-            )}
-          </div>
         </nav>
 
         {/* Bottom Section */}

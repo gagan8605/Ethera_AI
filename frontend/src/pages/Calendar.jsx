@@ -1,11 +1,16 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import Layout from '../components/Layout'
-import { useCalendarEvents } from '../hooks/useApi'
+import { useCalendarEvents, useCreateMeeting } from '../hooks/useApi'
+import { useAuthStore } from '../store/authStore'
 import { format, isBefore, startOfDay } from 'date-fns'
-import { CalendarDays, Clock3, Flag, FolderOpen, CheckCircle2 } from 'lucide-react'
+import { CalendarDays, Clock3, Flag, FolderOpen, CheckCircle2, Plus } from 'lucide-react'
 
 export default function Calendar() {
   const { data, isLoading } = useCalendarEvents()
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'ADMIN'
+  const createMeeting = useCreateMeeting()
+  const [meetingForm, setMeetingForm] = useState({ title: '', description: '', startAt: '', endAt: '', location: '', projectId: '' })
 
   const groupedEvents = useMemo(() => {
     const events = data?.events || []
@@ -18,6 +23,12 @@ export default function Calendar() {
   }, [data])
 
   const sortedDays = Object.keys(groupedEvents).sort()
+
+  const handleCreateMeeting = async (e) => {
+    e.preventDefault()
+    await createMeeting.mutateAsync(meetingForm)
+    setMeetingForm({ title: '', description: '', startAt: '', endAt: '', location: '', projectId: '' })
+  }
 
   return (
     <Layout>
@@ -32,8 +43,29 @@ export default function Calendar() {
           <StatCard icon={CalendarDays} label="Total Events" value={data?.summary?.totalEvents || 0} />
           <StatCard icon={Clock3} label="Upcoming" value={data?.summary?.upcomingEvents || 0} />
           <StatCard icon={Flag} label="Task Events" value={data?.summary?.taskEvents || 0} />
-          <StatCard icon={FolderOpen} label="Project Deadlines" value={data?.summary?.projectDeadlines || 0} />
+          <StatCard icon={FolderOpen} label="Milestones" value={(data?.summary?.milestoneEvents || data?.summary?.projectDeadlines || 0) + (data?.summary?.meetingEvents || 0)} />
         </div>
+
+        {isAdmin && (
+          <div className="rounded-2xl border border-gray-800 bg-gray-900/80 p-4">
+            <div className="mb-4 flex items-center gap-2">
+              <Plus className="h-5 w-5 text-violet-400" />
+              <h2 className="text-lg font-semibold text-white">Schedule a meeting</h2>
+            </div>
+            <form onSubmit={handleCreateMeeting} className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <input className="rounded-xl border border-gray-700 bg-gray-950/60 px-3 py-2.5 text-sm text-white" placeholder="Title" value={meetingForm.title} onChange={(e) => setMeetingForm({ ...meetingForm, title: e.target.value })} />
+              <input className="rounded-xl border border-gray-700 bg-gray-950/60 px-3 py-2.5 text-sm text-white" placeholder="Project ID (optional)" value={meetingForm.projectId} onChange={(e) => setMeetingForm({ ...meetingForm, projectId: e.target.value })} />
+              <input type="datetime-local" className="rounded-xl border border-gray-700 bg-gray-950/60 px-3 py-2.5 text-sm text-white" value={meetingForm.startAt} onChange={(e) => setMeetingForm({ ...meetingForm, startAt: e.target.value })} />
+              <input type="datetime-local" className="rounded-xl border border-gray-700 bg-gray-950/60 px-3 py-2.5 text-sm text-white" value={meetingForm.endAt} onChange={(e) => setMeetingForm({ ...meetingForm, endAt: e.target.value })} />
+              <input className="rounded-xl border border-gray-700 bg-gray-950/60 px-3 py-2.5 text-sm text-white md:col-span-2" placeholder="Location (optional)" value={meetingForm.location} onChange={(e) => setMeetingForm({ ...meetingForm, location: e.target.value })} />
+              <textarea className="rounded-xl border border-gray-700 bg-gray-950/60 px-3 py-2.5 text-sm text-white md:col-span-2 xl:col-span-3" rows={3} placeholder="Description (optional)" value={meetingForm.description} onChange={(e) => setMeetingForm({ ...meetingForm, description: e.target.value })} />
+              <button type="submit" disabled={createMeeting.isPending || !meetingForm.title || !meetingForm.startAt} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 md:col-span-2 xl:col-span-3">
+                <Plus className="h-4 w-4" />
+                {createMeeting.isPending ? 'Scheduling...' : 'Schedule meeting'}
+              </button>
+            </form>
+          </div>
+        )}
 
         <div className="rounded-2xl border border-gray-800 bg-gray-900/80 p-4">
           <div className="mb-4 flex items-center justify-between">
@@ -74,14 +106,14 @@ export default function Calendar() {
                               </div>
                               <h4 className="text-lg font-semibold text-white">{event.title}</h4>
                               <p className="text-sm text-gray-400">
-                                {event.project?.name || event.project?.title || 'Project deadline'}
+                                  {event.type === 'MEETING' ? (event.location || 'Scheduled meeting') : (event.project?.name || event.project?.title || 'Project deadline')}
                                 {event.assignee ? ` • ${event.assignee.name}` : ''}
                               </p>
                             </div>
 
                             <div className="grid gap-2 text-sm text-gray-300 md:text-right">
                               <p><span className="text-gray-500">Priority:</span> {event.priority || '—'}</p>
-                              <p><span className="text-gray-500">Status:</span> {event.status || event.project?.status || '—'}</p>
+                                <p><span className="text-gray-500">Status:</span> {event.type === 'MEETING' ? 'SCHEDULED' : (event.status || event.project?.status || '—')}</p>
                               <p><span className="text-gray-500">Due:</span> {format(new Date(event.date), 'hh:mm a')}</p>
                             </div>
                           </div>

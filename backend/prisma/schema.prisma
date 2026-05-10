@@ -27,6 +27,11 @@ model User {
   comments         Comment[]
   notifications    Notification[]
   activityLogs     ActivityLog[]
+  submittedSupportTickets SupportTicket[] @relation("SupportTicketRequester")
+  assignedSupportTickets  SupportTicket[] @relation("SupportTicketAssignee")
+  supportComments         SupportTicketComment[]
+  createdMeetings         Meeting[]
+  managedProjects         Project[]      @relation("ProjectManager")
 }
 
 model Project {
@@ -34,15 +39,26 @@ model Project {
   name        String
   description String?
   color       String   @default("#6366f1")
+  projectKey  String?  @unique
   status      ProjectStatus @default(ACTIVE)
+  priority    ProjectPriority @default(MEDIUM)
+  visibility  ProjectVisibility @default(TEAM)
+  teamName    String?
+  budget      Float?
+  department  String?
+  clientName  String?
+  startDate   DateTime?
   dueDate     DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   ownerId     String
   owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
+  projectManagerId String?
+  projectManager   User?    @relation("ProjectManager", fields: [projectManagerId], references: [id])
   members     ProjectMember[]
   tasks       Task[]
+  meetings    Meeting[]
   activityLogs ActivityLog[]
 }
 
@@ -68,6 +84,7 @@ model Task {
   dueDate     DateTime?
   position    Int        @default(0)
   tags        String[]
+  attachments String[]   @default([])
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -121,6 +138,57 @@ model ActivityLog {
   task      Task?   @relation(fields: [taskId], references: [id])
 }
 
+model SupportTicket {
+  id            String               @id @default(cuid())
+  ticketNumber  String               @unique
+  subject       String
+  category      String
+  message       String
+  screenshots   String[]             @default([])
+  status        SupportTicketStatus   @default(OPEN)
+  priority      SupportTicketPriority @default(MEDIUM)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+  lastRespondedAt DateTime?
+
+  requesterId   String
+  requester     User                 @relation("SupportTicketRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  assignedToId  String?
+  assignedTo    User?                @relation("SupportTicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  comments      SupportTicketComment[]
+}
+
+model SupportTicketComment {
+  id          String       @id @default(cuid())
+  content     String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startAt     DateTime
+  endAt       DateTime?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
 enum Role { 
   ADMIN 
   MEMBER 
@@ -138,6 +206,19 @@ enum ProjectStatus {
   COMPLETED 
 }
 
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectVisibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+}
+
 enum TaskStatus { 
   TODO 
   IN_PROGRESS 
@@ -150,4 +231,19 @@ enum Priority {
   MEDIUM 
   HIGH 
   URGENT 
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }

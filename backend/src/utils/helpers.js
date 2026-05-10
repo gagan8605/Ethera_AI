@@ -26,3 +26,9 @@ export const logActivity = async (prisma, userId, action, entity, entityId, proj
     console.error('Error logging activity:', error)
   }
 }
+
+export const createNotificationRecord = async (prisma, data) => {
+  return prisma.notification.create({
+    data
+  })
+}

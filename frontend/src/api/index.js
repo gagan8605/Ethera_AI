@@ -68,7 +68,8 @@ export const analyticsAPI = {
 }
 
 export const calendarAPI = {
-  events: () => client.get('/calendar/events')
+  events: () => client.get('/calendar/events'),
+  createMeeting: (data) => client.post('/calendar/meetings', data)
 }
 
 export const messageAPI = {
@@ -77,5 +78,10 @@ export const messageAPI = {
 }
 
 export const supportAPI = {
-  submit: (data) => client.post('/support', data)
+  submit: (data) => client.post('/support', data),
+  listTickets: (params) => client.get('/support/tickets', { params }),
+  getTicket: (ticketId) => client.get(`/support/tickets/${ticketId}`),
+  addComment: (ticketId, data) => client.post(`/support/tickets/${ticketId}/comments`, data),
+  updateStatus: (ticketId, data) => client.patch(`/support/tickets/${ticketId}/status`, data),
+  assignTicket: (ticketId, data) => client.patch(`/support/tickets/${ticketId}/assign`, data)
 }

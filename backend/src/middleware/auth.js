@@ -4,7 +4,7 @@ import prisma from '../utils/db.js'
 
 export const authenticate = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1]
+    const token = req.headers.authorization?.split(' ')[1] || req.query?.token
     if (!token) {
       throw new ApiError(401, 'No token provided')
     }
@@ -41,7 +41,11 @@ export const requireAdmin = (req, res, next) => {
 
 export const requireProjectMember = async (req, res, next) => {
   try {
-    const { projectId } = req.params
+    const projectId = req.params.projectId || req.params.id
+    if (!projectId) {
+      return res.status(400).json({ message: 'Project ID is required' })
+    }
+
     const member = await prisma.projectMember.findUnique({
       where: {
         userId_projectId: {
@@ -54,6 +58,10 @@ export const requireProjectMember = async (req, res, next) => {
     const project = await prisma.project.findUnique({
       where: { id: projectId }
     })
+
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' })
+    }
 
     if (!member && project.ownerId !== req.user.id) {
       return res.status(403).json({ message: 'Not a project member' })
@@ -68,7 +76,11 @@ export const requireProjectMember = async (req, res, next) => {
 
 export const requireProjectAdmin = async (req, res, next) => {
   try {
-    const { projectId } = req.params
+    const projectId = req.params.projectId || req.params.id
+    if (!projectId) {
+      return res.status(400).json({ message: 'Project ID is required' })
+    }
+
     const project = await prisma.project.findUnique({
       where: { id: projectId }
     })

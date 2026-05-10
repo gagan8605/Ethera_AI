@@ -14,6 +14,7 @@ import {
   MoreVertical,
   ArrowUpRight,
   ArrowDownRight,
+  ArrowRight,
   Eye,
   ThumbsUp,
   MessageSquare,

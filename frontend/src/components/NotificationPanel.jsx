@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNotifications, useMarkNotificationAsRead } from '../hooks/useApi'
+import { useNotifications, useMarkNotificationAsRead, useMarkAllNotifications } from '../hooks/useApi'
 import { Clock, BellOff, CheckCircle, AlertCircle, MessageSquare, Star } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import clsx from 'clsx'
@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 export default function NotificationPanel() {
   const { data: notifications, isLoading } = useNotifications()
   const markAsRead = useMarkNotificationAsRead()
+  const markAllAsRead = useMarkAllNotifications()
 
   const handleNotificationClick = (notification) => {
     if (!notification.read) {
@@ -54,7 +55,10 @@ export default function NotificationPanel() {
           </p>
         </div>
         {notifications && notifications.length > 0 && (
-          <button className="text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium">
+          <button
+            onClick={() => markAllAsRead.mutate()}
+            className="text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
+          >
             Mark all as read
           </button>
         )}

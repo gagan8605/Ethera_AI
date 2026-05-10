@@ -49,7 +49,45 @@ export const validateChangePassword = [
 // Project validations
 export const validateCreateProject = [
   body('name').trim().isLength({ min: 3, max: 100 }).withMessage('Project name must be between 3 and 100 characters'),
-  body('description').optional().trim().isLength({ max: 500 }).withMessage('Description must be less than 500 characters'),
+  body('description').trim().isLength({ min: 5, max: 500 }).withMessage('Description must be between 5 and 500 characters'),
+  body('team').trim().isLength({ min: 2, max: 100 }).withMessage('Team is required'),
+  body('projectManagerId').trim().isString().withMessage('Project manager is required'),
+  body('startDate')
+    .isISO8601()
+    .withMessage('Start date is required')
+    .custom((value) => {
+      const startDate = new Date(value)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (startDate < today) {
+        throw new Error('Start date must be today or in the future')
+      }
+
+      return true
+    }),
+  body('deadline')
+    .isISO8601()
+    .withMessage('Deadline is required')
+    .custom((value, { req }) => {
+      const deadline = new Date(value)
+      const startDate = new Date(req.body.startDate)
+
+      if (Number.isNaN(deadline.getTime())) {
+        throw new Error('Invalid deadline date')
+      }
+
+      if (deadline <= startDate) {
+        throw new Error('Deadline must be after start date')
+      }
+
+      return true
+    }),
+  body('priority').isIn(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).withMessage('Invalid priority'),
+  body('budget').optional().isFloat({ min: 0 }).withMessage('Budget must be a positive number'),
+  body('department').optional().trim().isLength({ max: 100 }).withMessage('Department must be less than 100 characters'),
+  body('clientName').optional().trim().isLength({ max: 100 }).withMessage('Client name must be less than 100 characters'),
+  body('visibility').optional().isIn(['PRIVATE', 'TEAM', 'PUBLIC']).withMessage('Invalid visibility'),
   body('color').optional().matches(/^#[0-9A-F]{6}$/i).withMessage('Invalid color format'),
   body('dueDate').optional().isISO8601().withMessage('Invalid date format')
 ]
@@ -57,6 +95,46 @@ export const validateCreateProject = [
 export const validateUpdateProject = [
   body('name').optional().trim().isLength({ min: 3, max: 100 }).withMessage('Project name must be between 3 and 100 characters'),
   body('description').optional().trim().isLength({ max: 500 }).withMessage('Description must be less than 500 characters'),
+  body('team').optional().trim().isLength({ min: 2, max: 100 }).withMessage('Invalid team name'),
+  body('projectManagerId').optional().trim().isString().withMessage('Invalid project manager'),
+  body('startDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Invalid start date format')
+    .custom((value) => {
+      const startDate = new Date(value)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (startDate < today) {
+        throw new Error('Start date must be today or in the future')
+      }
+
+      return true
+    }),
+  body('deadline')
+    .optional()
+    .isISO8601()
+    .withMessage('Invalid deadline date format')
+    .custom((value, { req }) => {
+      const deadline = new Date(value)
+      const startDate = req.body.startDate ? new Date(req.body.startDate) : null
+
+      if (Number.isNaN(deadline.getTime())) {
+        throw new Error('Invalid deadline date')
+      }
+
+      if (startDate && deadline <= startDate) {
+        throw new Error('Deadline must be after start date')
+      }
+
+      return true
+    }),
+  body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).withMessage('Invalid priority'),
+  body('budget').optional().isFloat({ min: 0 }).withMessage('Budget must be a positive number'),
+  body('department').optional().trim().isLength({ max: 100 }).withMessage('Department must be less than 100 characters'),
+  body('clientName').optional().trim().isLength({ max: 100 }).withMessage('Client name must be less than 100 characters'),
+  body('visibility').optional().isIn(['PRIVATE', 'TEAM', 'PUBLIC']).withMessage('Invalid visibility'),
   body('color').optional().matches(/^#[0-9A-F]{6}$/i).withMessage('Invalid color format'),
   body('status').optional().isIn(['ACTIVE', 'ARCHIVED', 'COMPLETED']).withMessage('Invalid status'),
   body('dueDate').optional().isISO8601().withMessage('Invalid date format')
@@ -76,8 +154,22 @@ export const validateCreateTask = [
   body('title').trim().isLength({ min: 3, max: 200 }).withMessage('Task title must be between 3 and 200 characters'),
   body('description').optional().trim().isLength({ max: 2000 }).withMessage('Description must be less than 2000 characters'),
   body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).withMessage('Invalid priority'),
-  body('dueDate').optional().isISO8601().withMessage('Invalid date format'),
-  body('tags').optional().isArray().withMessage('Tags must be an array')
+  body('dueDate')
+    .isISO8601()
+    .withMessage('Due date is required')
+    .custom((value) => {
+      const dueDate = new Date(value)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (dueDate < today) {
+        throw new Error('Due date must be today or in the future')
+      }
+
+      return true
+    }),
+  body('tags').optional().isArray().withMessage('Tags must be an array'),
+  body('attachments').optional().isArray().withMessage('Attachments must be an array')
 ]
 
 export const validateUpdateTask = [
@@ -86,12 +178,36 @@ export const validateUpdateTask = [
   body('status').optional().isIn(['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE']).withMessage('Invalid status'),
   body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).withMessage('Invalid priority'),
   body('assigneeId').optional().isString().withMessage('Invalid assignee ID'),
-  body('dueDate').optional().isISO8601().withMessage('Invalid date format'),
-  body('tags').optional().isArray().withMessage('Tags must be an array')
+  body('dueDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Invalid date format')
+    .custom((value) => {
+      const dueDate = new Date(value)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (dueDate < today) {
+        throw new Error('Due date must be today or in the future')
+      }
+
+      return true
+    }),
+  body('tags').optional().isArray().withMessage('Tags must be an array'),
+  body('attachments').optional().isArray().withMessage('Attachments must be an array')
 ]
 
 export const validateCreateComment = [
   body('content').trim().isLength({ min: 1, max: 1000 }).withMessage('Comment must be between 1 and 1000 characters')
+]
+
+export const validateCreateMeeting = [
+  body('title').trim().isLength({ min: 3, max: 200 }).withMessage('Meeting title must be between 3 and 200 characters'),
+  body('description').optional().trim().isLength({ max: 2000 }).withMessage('Description must be less than 2000 characters'),
+  body('startAt').isISO8601().withMessage('Invalid start time'),
+  body('endAt').optional().isISO8601().withMessage('Invalid end time'),
+  body('location').optional().trim().isLength({ max: 200 }).withMessage('Location must be less than 200 characters'),
+  body('projectId').optional().isString().withMessage('Invalid project ID')
 ]
 
 export const validateQueryFilters = [
@@ -109,7 +225,34 @@ export const validateSendMessage = [
 ]
 
 export const validateSupportRequest = [
-  body('subject').trim().isLength({ min: 3, max: 120 }).withMessage('Subject must be between 3 and 120 characters'),
+  body('subject').trim().isLength({ min: 2, max: 120 }).withMessage('Subject must be between 2 and 120 characters'),
   body('category').optional().trim().isLength({ min: 2, max: 50 }).withMessage('Invalid category'),
-  body('message').trim().isLength({ min: 10, max: 2000 }).withMessage('Message must be between 10 and 2000 characters')
+  body('message').trim().isLength({ min: 5, max: 2000 }).withMessage('Message must be between 5 and 2000 characters'),
+  body('screenshots').optional().isArray().withMessage('Screenshots must be an array')
+]
+
+export const validateSupportTicketList = [
+  query('scope').optional().trim().isIn(['mine', 'all']).withMessage('Invalid scope'),
+  query('status')
+    .optional()
+    .trim()
+    .isIn(['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'RESOLVED', 'CLOSED'])
+    .withMessage('Invalid status'),
+  query('category').optional().trim().isLength({ min: 2, max: 50 }).withMessage('Invalid category'),
+  query('search').optional().trim().isLength({ min: 2, max: 120 }).withMessage('Search must be between 2 and 120 characters')
+]
+
+export const validateSupportTicketComment = [
+  body('content').trim().isLength({ min: 2, max: 2000 }).withMessage('Comment must be between 2 and 2000 characters')
+]
+
+export const validateSupportTicketStatus = [
+  body('status')
+    .trim()
+    .isIn(['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'RESOLVED', 'CLOSED'])
+    .withMessage('Invalid status')
+]
+
+export const validateSupportTicketAssignment = [
+  body('assignedToId').optional().trim().isString().withMessage('Invalid assignee')
 ]

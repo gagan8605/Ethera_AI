@@ -16,6 +16,7 @@ import analyticsRoutes from './routes/analyticsRoutes.js'
 import calendarRoutes from './routes/calendarRoutes.js'
 import messageRoutes from './routes/messageRoutes.js'
 import supportRoutes from './routes/supportRoutes.js'
+import realtimeRoutes from './routes/realtimeRoutes.js'
 import { errorHandler, notFound } from './middleware/errorHandler.js'
 
 dotenv.config()
@@ -92,6 +93,7 @@ app.use('/api/analytics', analyticsRoutes)
 app.use('/api/calendar', calendarRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/support', supportRoutes)
+app.use('/api/realtime', realtimeRoutes)
 
 // Health check
 app.get('/health', (req, res) => {

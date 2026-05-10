@@ -50,6 +50,8 @@ export const useAuthStore = create((set) => ({
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     set({ user: null, isAuthenticated: false })
+    // Redirect to login page
+    window.location.href = '/login'
   },
 
   getCurrentUser: async () => {
@@ -96,6 +98,35 @@ export const useAuthStore = create((set) => ({
   changePassword: async (currentPassword, newPassword) => {
     try {
       await authAPI.changePassword({ currentPassword, newPassword })
+    } catch (error) {
+      throw error
+    }
+  },
+
+  deactivateAccount: async (password) => {
+    try {
+      await authAPI.deactivateAccount({ password })
+      set((state) => ({ user: { ...state.user, isActive: false } }))
+    } catch (error) {
+      throw error
+    }
+  },
+
+  activateAccount: async (password) => {
+    try {
+      await authAPI.activateAccount({ password })
+      set((state) => ({ user: { ...state.user, isActive: true } }))
+    } catch (error) {
+      throw error
+    }
+  },
+
+  deleteAccount: async (password, confirmDelete) => {
+    try {
+      await authAPI.deleteAccount({ password, confirmDelete })
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      set({ user: null, isAuthenticated: false })
     } catch (error) {
       throw error
     }

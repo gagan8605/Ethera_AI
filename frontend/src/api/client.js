@@ -94,7 +94,8 @@ client.interceptors.response.use(
         processQueue(err, null)
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
-        window.location.href = '/login'
+        // Instead of redirecting immediately, dispatch a custom event
+        window.dispatchEvent(new CustomEvent('auth:logout'))
         return Promise.reject(err)
       }
     }

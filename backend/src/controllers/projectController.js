@@ -42,14 +42,20 @@ export const listProjects = asyncHandler(async (req, res) => {
       owner: { select: { id: true, name: true, avatar: true } },
       projectManager: { select: { id: true, name: true, avatar: true, email: true } },
       members: {
-        include: { user: { select: { id: true, name: true, avatar: true } } }
+        include: { user: { select: { id: true, name: true, avatar: true, isActive: true } } }
       },
       _count: { select: { tasks: true } }
     },
     orderBy: { createdAt: 'desc' }
   })
 
-  res.json(projects)
+  // Filter out deactivated users from members
+  const filteredProjects = projects.map((project) => ({
+    ...project,
+    members: project.members.filter((member) => member.user.isActive !== false)
+  }))
+
+  res.json(filteredProjects)
 })
 
 export const createProject = asyncHandler(async (req, res) => {
@@ -143,7 +149,7 @@ export const getProject = asyncHandler(async (req, res) => {
       owner: { select: { id: true, name: true, avatar: true, email: true } },
       projectManager: { select: { id: true, name: true, avatar: true, email: true } },
       members: {
-        include: { user: { select: { id: true, name: true, avatar: true, email: true } } }
+        include: { user: { select: { id: true, name: true, avatar: true, email: true, isActive: true } } }
       },
       _count: { select: { tasks: true } }
     }
@@ -161,7 +167,13 @@ export const getProject = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Access denied')
   }
 
-  res.json(project)
+  // Filter out deactivated users from members
+  const filteredProject = {
+    ...project,
+    members: project.members.filter((member) => member.user.isActive !== false)
+  }
+
+  res.json(filteredProject)
 })
 
 export const updateProject = asyncHandler(async (req, res) => {
@@ -276,7 +288,7 @@ export const getProjectMembers = asyncHandler(async (req, res) => {
     include: {
       members: {
         include: {
-          user: { select: { id: true, name: true, email: true, avatar: true } }
+          user: { select: { id: true, name: true, email: true, avatar: true, isActive: true } }
         }
       },
       owner: { select: { id: true, name: true, email: true, avatar: true } },
@@ -296,8 +308,11 @@ export const getProjectMembers = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Access denied')
   }
 
+  // Filter out deactivated users
+  const activeMembers = project.members.filter((member) => member.user.isActive !== false)
+
   const membersWithTaskCount = await Promise.all(
-    project.members.map(async (member) => {
+    activeMembers.map(async (member) => {
       const taskCount = await prisma.task.count({
         where: {
           projectId: id,

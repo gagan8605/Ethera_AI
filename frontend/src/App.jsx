@@ -72,11 +72,21 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
-  const { isLoading, initializeAuth } = useAuthStore()
+  const { isLoading, initializeAuth, logout } = useAuthStore()
 
   useEffect(() => {
     initializeAuth()
   }, [])
+
+  // Listen for auth logout events from API client
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      logout()
+    }
+
+    window.addEventListener('auth:logout', handleAuthLogout)
+    return () => window.removeEventListener('auth:logout', handleAuthLogout)
+  }, [logout])
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -14,10 +14,10 @@ export const getTeamOverview = asyncHandler(async (req, res) => {
   const projects = await prisma.project.findMany({
     where: getAccessibleProjectsWhere(userId),
     include: {
-      owner: { select: { id: true, name: true, email: true, avatar: true, role: true } },
+      owner: { select: { id: true, name: true, email: true, avatar: true, role: true, isActive: true } },
       members: {
         include: {
-          user: { select: { id: true, name: true, email: true, avatar: true, role: true } }
+          user: { select: { id: true, name: true, email: true, avatar: true, role: true, isActive: true } }
         }
       },
       _count: { select: { tasks: true } }
@@ -30,6 +30,8 @@ export const getTeamOverview = asyncHandler(async (req, res) => {
 
   const ensureMember = (user, roleLabel) => {
     if (!user) return null
+    // Filter out deactivated users
+    if (user.isActive === false) return null
 
     if (!memberMap.has(user.id)) {
       memberMap.set(user.id, {

@@ -3,6 +3,9 @@ import { ApiError, asyncHandler, logActivity } from '../utils/helpers.js'
 
 export const listUsers = asyncHandler(async (req, res) => {
   const users = await prisma.user.findMany({
+    where: {
+      isActive: true
+    },
     select: {
       id: true,
       name: true,

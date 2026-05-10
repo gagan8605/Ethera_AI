@@ -29,6 +29,7 @@ export const register = asyncHandler(async (req, res) => {
       email: true,
       avatar: true,
       role: true,
+      isActive: true,
       createdAt: true
     }
   })
@@ -78,6 +79,7 @@ export const login = asyncHandler(async (req, res) => {
     email: user.email,
     avatar: user.avatar,
     role: user.role,
+    isActive: user.isActive,
     createdAt: user.createdAt
   }
 
@@ -135,6 +137,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
       email: true,
       avatar: true,
       role: true,
+      isActive: true,
       createdAt: true,
       updatedAt: true
     }
@@ -158,6 +161,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
       email: true,
       avatar: true,
       role: true,
+      isActive: true,
       updatedAt: true
     }
   })
@@ -186,6 +190,129 @@ export const changePassword = asyncHandler(async (req, res) => {
   })
 
   res.json({ message: 'Password changed successfully' })
+})
+
+export const deactivateAccount = asyncHandler(async (req, res) => {
+  const { password } = req.body
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id }
+  })
+
+  const isPasswordValid = await bcryptjs.compare(password, user.password)
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, 'Password is incorrect')
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(400, 'Account is already deactivated')
+  }
+
+  await prisma.user.update({
+    where: { id: req.user.id },
+    data: { isActive: false }
+  })
+
+  res.json({ message: 'Account deactivated successfully' })
+})
+
+export const activateAccount = asyncHandler(async (req, res) => {
+  const { password } = req.body
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id }
+  })
+
+  const isPasswordValid = await bcryptjs.compare(password, user.password)
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, 'Password is incorrect')
+  }
+
+  if (user.isActive) {
+    throw new ApiError(400, 'Account is already active')
+  }
+
+  await prisma.user.update({
+    where: { id: req.user.id },
+    data: { isActive: true }
+  })
+
+  res.json({ message: 'Account activated successfully' })
+})
+
+export const deleteAccount = asyncHandler(async (req, res) => {
+  const { password, confirmDelete } = req.body
+
+  if (confirmDelete !== 'DELETE') {
+    throw new ApiError(400, 'Please type "DELETE" to confirm account deletion')
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id }
+  })
+
+  const isPasswordValid = await bcryptjs.compare(password, user.password)
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, 'Password is incorrect')
+  }
+
+  // Delete all related data first due to foreign key constraints
+  await prisma.comment.deleteMany({
+    where: { userId: req.user.id }
+  })
+
+  await prisma.notification.deleteMany({
+    where: { userId: req.user.id }
+  })
+
+  await prisma.activityLog.deleteMany({
+    where: { userId: req.user.id }
+  })
+
+  await prisma.supportTicketComment.deleteMany({
+    where: { userId: req.user.id }
+  })
+
+  await prisma.supportTicket.deleteMany({
+    where: {
+      OR: [
+        { requesterId: req.user.id },
+        { assigneeId: req.user.id }
+      ]
+    }
+  })
+
+  await prisma.task.deleteMany({
+    where: {
+      OR: [
+        { assigneeId: req.user.id },
+        { creatorId: req.user.id }
+      ]
+    }
+  })
+
+  await prisma.projectMember.deleteMany({
+    where: { userId: req.user.id }
+  })
+
+  await prisma.project.deleteMany({
+    where: { ownerId: req.user.id }
+  })
+
+  await prisma.meeting.deleteMany({
+    where: { creatorId: req.user.id }
+  })
+
+  // Finally delete the user
+  await prisma.user.delete({
+    where: { id: req.user.id }
+  })
+
+  res.clearCookie('refreshToken')
+  res.json({ message: 'Account deleted successfully' })
 })
 
 const generateAvatarColor = () => {

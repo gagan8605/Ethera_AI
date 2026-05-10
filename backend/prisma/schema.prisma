@@ -17,6 +17,7 @@ model User {
   password      String
   avatar        String?   // initials-based color avatar
   role          Role      @default(MEMBER)
+  isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { projectAPI, taskAPI, dashboardAPI, notificationAPI, teamAPI, analyticsAPI, calendarAPI, messageAPI, supportAPI } from '../api/index.js'
+import { useAuthStore } from '../store/authStore.js'
 import toast from 'react-hot-toast'
 
 export const useProjects = () => {
@@ -180,13 +181,16 @@ export const useActivityFeed = () => {
 }
 
 export const useNotifications = () => {
+  const { isAuthenticated } = useAuthStore()
+  
   return useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
       const response = await notificationAPI.list()
       return response.data
     },
-    refetchInterval: 30000
+    refetchInterval: 30000,
+    enabled: isAuthenticated // Only run if user is authenticated
   })
 }
 

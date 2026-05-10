@@ -7,7 +7,10 @@ export const authAPI = {
   logout: () => client.post('/auth/logout'),
   getCurrentUser: () => client.get('/auth/me'),
   updateProfile: (data) => client.put('/auth/me', data),
-  changePassword: (data) => client.put('/auth/me/password', data)
+  changePassword: (data) => client.put('/auth/me/password', data),
+  deactivateAccount: (data) => client.put('/auth/me/deactivate', data),
+  activateAccount: (data) => client.put('/auth/me/activate', data),
+  deleteAccount: (data) => client.delete('/auth/me', { data })
 }
 
 export const userAPI = {

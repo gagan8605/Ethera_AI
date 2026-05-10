@@ -46,6 +46,19 @@ export const validateChangePassword = [
     .withMessage('Password must contain a number')
 ]
 
+export const validateDeactivateAccount = [
+  body('password').notEmpty().withMessage('Password is required to deactivate account')
+]
+
+export const validateActivateAccount = [
+  body('password').notEmpty().withMessage('Password is required to activate account')
+]
+
+export const validateDeleteAccount = [
+  body('password').notEmpty().withMessage('Password is required to delete account'),
+  body('confirmDelete').equals('DELETE').withMessage('Please type "DELETE" to confirm account deletion')
+]
+
 // Project validations
 export const validateCreateProject = [
   body('name').trim().isLength({ min: 3, max: 100 }).withMessage('Project name must be between 3 and 100 characters'),
